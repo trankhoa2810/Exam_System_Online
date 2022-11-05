@@ -62,27 +62,32 @@ app.post('/create', (req, res) => {
   var test = chamhoi.repeat(keys.length)
   test = test.slice(0, -1)
 
-
+  let checkUser = 0;
   var sql = `SELECT * FROM projectqtcsdl.${tablename}`;
   db.query(sql, function (err, results) {
     if (err) throw err;
     for(result of results){
-      if(result.username == req.body.fieldname.username)
+      if(result.username == req.body.fieldname.username){
         res.send('User already exists!')
-      else{
-        let str = `INSERT INTO projectqtcsdl.${tablename} (${keys.join(',')}) VALUES (${test})`
-        db.query(
-          str, values,
-          (err, result) => {
-            if (err) {
-              console.log(err);
-            } else {
-              return res.send("Create Account Successfully!");
-            }
-          }
-        );
+        // console.log('User already exists!');
+        checkUser = 1
+        break
       }
     }
+  if (!checkUser){
+    let str = `INSERT INTO projectqtcsdl.${tablename} (${keys.join(',')}) VALUES (${test})`
+    db.query(
+      str, values,
+      (err, result) => {
+        if (err) {
+          console.log(err);
+        } else {
+          return res.send("Create Account Successfully!");
+          // console.log('Create Account Successfully!')
+        }
+      }
+    );
+  }
   });
 
   // let str = `INSERT INTO projectqtcsdl.${tablename} (${keys.join(',')}) VALUES (${test})`
