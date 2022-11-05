@@ -8,8 +8,9 @@ const bodyParser = require('body-parser');
 const port = 3000;
 
 const handlebars = require('express-handlebars');
+const { rmSync } = require('fs');
 
-const route = require('./routes');
+// const route = require('./routes');
 
 // parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({ extended: false }))
@@ -25,20 +26,13 @@ app.use(morgan('combined'));
 // db.connect();
 
 // app.use(express.static(path.join(__dirname, 'public')));
-// app.use(express.urlencoded({
-//   extended: true
-// }));
-// app.use(express.json());
+app.use(express.urlencoded({
+  extended: true
+}));
+app.use(express.json());
 
 // HTTP logger.
 app.use(morgan('combined'));
-
-// Templete Engine.
-app.engine('hbs', handlebars.engine({
-  extname: '.hbs'
-}));
-app.set('view engine', 'hbs');
-app.set("views", path.join(__dirname, 'resources', 'views'));
 
 
 // Database
@@ -49,45 +43,87 @@ var db = mysql.createConnection({
   database: "projectqtcsdl"
 })
 
-db.connect(function(err) {
+db.connect(function (err) {
   if (err) throw err;
   console.log("Connected!!!")
 });
 
+// Requiring module
 app.post('/create', (req, res) => {
-  // console.log(req)
-  // const username = req.body.username;
-  // const password = req.body.password;
-  // const fullname = req.body.fullname;
-  // const email = req.body.email;
-  // const isAdmin = req.body.isAdmin;
-
-  console.log(req.body)
-
   const tablename = req.body.tablename;
   const fieldname = req.body.fieldname;
   const keys = Object.keys(fieldname);
-  const values = Object.values(fieldname)
-  console.log(keys);
+  const values = Object.values(fieldname);
 
-  const chamhoi = '?,'
-  console.log(chamhoi)
+  req.body.fieldname['password'] = 'trankhoa';
+
+  const chamhoi = '?,';
+  // console.log(chamhoi)
   var test = chamhoi.repeat(keys.length)
   test = test.slice(0, -1)
 
-  let str = `INSERT INTO projectqtcsdl.${tablename} (${keys.join(',')}) VALUES (${test})`
-  
-  db.query(
-    str, values,
-    (err, result) => {
-      if (err){
-        console.log(err);
-      } else {
-        return res.send("Value Inserted");
+
+  var sql = `SELECT * FROM projectqtcsdl.${tablename}`;
+  db.query(sql, function (err, results) {
+    if (err) throw err;
+    for(result of results){
+      if(result.username == req.body.fieldname.username)
+        res.send('User already exists!')
+      else{
+        let str = `INSERT INTO projectqtcsdl.${tablename} (${keys.join(',')}) VALUES (${test})`
+        db.query(
+          str, values,
+          (err, result) => {
+            if (err) {
+              console.log(err);
+            } else {
+              return res.send("Create Account Successfully!");
+            }
+          }
+        );
       }
     }
-  );
-  return res.json({});
+  });
+
+  // let str = `INSERT INTO projectqtcsdl.${tablename} (${keys.join(',')}) VALUES (${test})`
+
+  // db.query(
+  //   str, values,
+  //   (err, result) => {
+  //     if (err) {
+  //       console.log(err);
+  //     } else {
+  //       return res.send("Value Inserted");
+  //     }
+  //   }
+  // );
+
+
+  // var sqlBeforeUpdateTrigger=`
+  // delimiter //
+  // CREATE TRIGGER upd_check BEFORE UPDATE ON projectqtcsdl.user
+  //        FOR EACH ROW
+  //        BEGIN
+  //         IF NEW.username = ${req.body.fieldname.password} THEN
+  //           SET NEW.username = 'haha';
+  //         ELSEIF NEW.amount > 100 THEN
+  //           SET NEW.amount = 100;
+  //         END IF;
+  //        END;//
+  // delimiter ;`
+
+  // return new Promise(async (resolve, reject) => {
+
+  //     db.query(sqlBeforeUpdateTrigger, function (err, result, fields) {
+  //        if (err) {
+  //           reject(err);
+  //        }
+  //       // resolve(result);
+  //      });
+
+  //    });
+  // res.redirect('/fetch?tablename=user');
+  // return res.json()
 });
 
 // app.post('/createExam', (req, res) => {
@@ -113,7 +149,7 @@ app.get('/fetch', function (req, res) {
   const tablename = req.query.tablename;
 
   var sql = `SELECT * FROM projectqtcsdl.${tablename}`;
-  db.query(sql, function(err, results) {
+  db.query(sql, function (err, results) {
     if (err) throw err;
     res.send(results);
   });
@@ -127,12 +163,36 @@ app.post('/delete', function (req, res) {
   const values = Object.values(fieldname)
 
   var sql = `DELETE FROM projectqtcsdl.${tablename} WHERE (${keys[0]} = ${values[0]});`;
-  db.query(sql, function(err, results) {
+  db.query(sql, function (err, results) {
     if (err) throw err;
     res.send(results);
   });
   console.log("Successfully")
 });
+
+// Login
+app.post('/login', function (req, res) {
+  const username = req.body.username;
+  const password = req.body.password;
+
+  db.query('SELECT * FROM projectqtcsdl.user', function (err, result) {
+    if (err) throw err;
+    let checkUSer = 0;
+    for (i = 0; i < result.length; i++) {
+      if (result[i].username == username) {
+        result[i].password == password;
+        checkUSer = 1;
+      }
+    }
+    if (checkUSer) {
+      res.redirect('/fetch?tablename=user');
+    }
+    else {
+      return res.send('username or password is wrong!');
+    }
+  })
+});
+
 
 // app.get('/exam', function (req, res) {
 //   var sql = "SELECT * FROM projectqtcsdl.exam";
@@ -180,7 +240,7 @@ app.post('/delete', function (req, res) {
 // });
 
 // Route init.
-route(app);
+// route(app);
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
