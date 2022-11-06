@@ -153,9 +153,8 @@ app.post('/delete', function (req, res) {
   const keys = Object.keys(fieldname);
   const values = Object.values(fieldname)
 
-  var TRANSACTION;
   if (req.body.fieldname.checkdelete == "True") {
-    var sql = `BEGIN TRANSACTION; DELETE FROM projectqtcsdl.${tablename} WHERE (${keys[0]} = ${values[0]}); ${TRANSACTION};`
+    var sql = `DELETE FROM projectqtcsdl.${tablename} WHERE (${keys[0]} = ${values[0]});`
     db.query(sql, function (err, results) {
       if (err) throw err;
       res.send('Deleted!');
