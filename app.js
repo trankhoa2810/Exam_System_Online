@@ -68,10 +68,10 @@ app.post('/create', (req, res) => {
       if (err) throw err;
       for (result of results) {
         if (result.username == req.body.fieldname.username) {
-          res.send('User already exists!')
+          res.send("User already exists!");
           // console.log('User already exists!');
-          checkUser = 1
-          break
+          checkUser = 1;
+          break;
         }
       }
       if (!checkUser) {
@@ -82,7 +82,7 @@ app.post('/create', (req, res) => {
             if (err) {
               console.log(err);
             } else {
-              return res.send("Create Account Successfully!");
+              res.send("Create Account Successfully!");
               // console.log('Create Account Successfully!')
             }
           }
@@ -90,54 +90,19 @@ app.post('/create', (req, res) => {
       }
     });
   }
-  let str = `INSERT INTO projectqtcsdl.${tablename} (${keys.join(',')}) VALUES (${test})`
-  db.query(
-    str, values,
-    (err, result) => {
-      if (err) {
-        console.log(err);
-      } else {
-        return res.send(`Create ${tablename}} Successfully!`);
+  else{
+    let str = `INSERT INTO projectqtcsdl.${tablename} (${keys.join(',')}) VALUES (${test})`
+    db.query(
+      str, values,
+      (err, result) => {
+        if (err) {
+          console.log(err);
+        } else {
+          res.send(`Create ${tablename} Successfully!`);
+        }
       }
-    }
-  );
-  // let str = `INSERT INTO projectqtcsdl.${tablename} (${keys.join(',')}) VALUES (${test})`
-
-  // db.query(
-  //   str, values,
-  //   (err, result) => {
-  //     if (err) {
-  //       console.log(err);
-  //     } else {
-  //       return res.send("Value Inserted");
-  //     }
-  //   }
-  // );
-
-
-  // var sqlBeforeUpdateTrigger=`
-  // delimiter //
-  // CREATE TRIGGER upd_check BEFORE UPDATE ON projectqtcsdl.user
-  //        FOR EACH ROW
-  //        BEGIN
-  //         IF NEW.username = ${req.body.fieldname.password} THEN
-  //           SET NEW.username = 'haha';
-  //         ELSEIF NEW.amount > 100 THEN
-  //           SET NEW.amount = 100;
-  //         END IF;
-  //        END;//
-  // delimiter ;`
-
-  // return new Promise(async (resolve, reject) => {
-
-  //     db.query(sqlBeforeUpdateTrigger, function (err, result, fields) {
-  //        if (err) {
-  //           reject(err);
-  //        }
-  //      });
-  //    });
-  // res.redirect('/fetch?tablename=user');
-  // return res.json()
+    );
+  }
 });
 
 // app.post('/createExam', (req, res) => {
