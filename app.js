@@ -61,34 +61,44 @@ app.post('/create', (req, res) => {
   test = test.slice(0, -1)
 
   // Create User
+  // rollback
   let checkUser = 0;
   if (req.body.tablename == 'user') {
-    var sql = `SELECT * FROM projectqtcsdl.${tablename}`;
-    db.query(sql, function (err, results) {
-      if (err) throw err;
-      for (result of results) {
-        if (result.username == req.body.fieldname.username) {
-          res.send("User already exists!");
-          // console.log('User already exists!');
-          checkUser = 1;
-          break;
+    db.beginTransaction(function(err){
+      if (err){
+        throw err;
+      }
+      var sql = `SELECT * FROM projectqtcsdl.${tablename}`;
+      db.query(sql, function (err, results) {
+        if (err) { 
+          db.rollback(function() {
+            throw err;
+          });
         }
-      }
-      if (!checkUser) {
-        let str = `INSERT INTO projectqtcsdl.${tablename} (${keys.join(',')}) VALUES (${test})`
-        db.query(
-          str, values,
-          (err, result) => {
-            if (err) {
-              console.log(err);
-            } else {
-              res.send("Create Account Successfully!");
-              // console.log('Create Account Successfully!')
-            }
+        for (result of results) {
+          if (result.username == req.body.fieldname.username) {
+            res.send("User already exists!");
+            // console.log('User already exists!');
+            checkUser = 1;
+            break;
           }
-        );
-      }
-    });
+        }
+        if (!checkUser) {
+          let str = `INSERT INTO projectqtcsdl.${tablename} (${keys.join(',')}) VALUES (${test})`
+          db.query(
+            str, values,
+            (err, result) => {
+              if (err) {
+                console.log(err);
+              } else {
+                res.send("Create Account Successfully!");
+                // console.log('Create Account Successfully!')
+              }
+            }
+          );
+        }
+      });
+    })
   }
   else{
     let str = `INSERT INTO projectqtcsdl.${tablename} (${keys.join(',')}) VALUES (${test})`
@@ -145,15 +155,14 @@ app.post('/delete', function (req, res) {
 
   var TRANSACTION;
   if (req.body.fieldname.checkdelete == "True") {
-    TRANSACTION = 'COMMIT';
+    var sql = `BEGIN TRANSACTION; DELETE FROM projectqtcsdl.${tablename} WHERE (${keys[0]} = ${values[0]}); ${TRANSACTION};`
+    db.query(sql, function (err, results) {
+      if (err) throw err;
+      res.send('Deleted!');
+    });
+    console.log("Successfully")
   }
-  else TRANSACTION = 'ROLLBACK'
-  var sql = `BEGIN TRANSACTION; DELETE FROM projectqtcsdl.${tablename} WHERE (${keys[0]} = ${values[0]}); ${TRANSACTION};`
-  db.query(sql, function (err, results) {
-    if (err) throw err;
-    res.send('Deleted!');
-  });
-  console.log("Successfully")
+  else res.send('Delete Fail!');
 });
 
 // Login
@@ -170,19 +179,15 @@ app.post('/login', function (req, res) {
       if (result[i].username == username) {
         checkUSerinvalid = 1;
         if (result[i].password == password)
-          // console.log(i)
-          // console.log(result[i].username, username, result[i].password, password)
           checkUSer = 1;
         console.log(checkUSer)
         break
       }
-      // console.log(result[i].username, result[i].password)
-      // console.log(result[i].username, username, result[i].password, password)
-
     }
     console.log(checkUSer)
     if (checkUSer && checkUSerinvalid) {
-      res.redirect('/fetch?tablename=user');
+      // res.redirect('/fetch?tablename=user');
+      res.send('Login Successfully!')
     }
     else if (!checkUSerinvalid) {
       res.send('User does not exist!')
