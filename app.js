@@ -115,6 +115,44 @@ app.post('/create', (req, res) => {
   }
 });
 
+
+app.post('/updateUser', (req, res) => {
+  const fieldname = req.body;
+  // const keys = Object.keys(fieldname);
+  // const values = Object.values(fieldname);
+  var sql = `UPDATE user SET fullname = '${fieldname.fullname}', password = '${fieldname.password}', email = '${fieldname.email}' WHERE iduser = '${fieldname.iduser}';`;
+  db.query(sql, (err, results) => {
+    if(err) {
+      throw err;
+    }
+    res.send('Update Successfully')
+  })
+  // res.send(sql)
+})
+
+var score;
+app.post('/score', (req, res) => {
+  const fieldnames = req.body;
+  score = 0;
+  var sql = `SELECT * FROM projectqtcsdl.question`
+  db.query(sql, (err, results) => {
+    for(fieldname of fieldnames){
+      for(result of results){
+        if(fieldname.idquestion == result.idquestion){
+          if(fieldname.answersubmit == result.rightanswer){
+            score ++;
+            // console.log(score)
+          }
+        }
+        // console.log(fieldname.answersubmit == result.rightanswer)
+      }
+      // console.log(score)
+    }
+    console.log(`Score: ${score * 10}`);
+  })
+})
+
+console.log(score)
 // app.post('/createExam', (req, res) => {
 //   console.log(req)
 //   const name = req.body.name;
